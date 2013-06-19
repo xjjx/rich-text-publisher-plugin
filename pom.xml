@@ -92,9 +92,9 @@
     </pluginRepositories>
 
     <scm>
-        <connection>scm:git:ssh://github.com/masterhard/rich-text-publisher-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/masterhard/rich-text-publisher-plugin.git</developerConnection>
-        <url>https://github.com/masterhard/rich-text-publisher-plugin</url>
+        <connection>scm:git:ssh://github.com/jenkinsci/rich-text-publisher-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/rich-text-publisher-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/rich-text-publisher-plugin.git</url>
     </scm>
 
     <properties>
