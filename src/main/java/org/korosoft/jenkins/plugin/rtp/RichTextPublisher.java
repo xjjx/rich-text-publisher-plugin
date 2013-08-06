@@ -258,7 +258,7 @@ public class RichTextPublisher extends Recorder {
             try {
                 FilePath workspace = project.getSomeWorkspace();
                 if (workspace == null) {
-                    return FormValidation.warning("Cannot validate the path since the project was never built.");
+                    return FormValidation.warning(Messages.neverBuilt());
                 }
                 Matcher matcher = FILE_VAR_PATTERN.matcher(value);
                 int start = 0;
@@ -275,11 +275,11 @@ public class RichTextPublisher extends Recorder {
                     return FormValidation.ok();
                 }
                 if (missingFiles.size() == 1) {
-                    return FormValidation.warning("File %s was not found in the workspace", missingFiles.get(0));
+                    return FormValidation.warning(Messages.fileNotFound(), missingFiles.get(0));
                 }
-                return FormValidation.warning("Files %s were not found in the workspace", StringUtils.join(missingFiles, ", "));
+                return FormValidation.warning(Messages.filesNotFound(), StringUtils.join(missingFiles, ", "));
             } catch (InterruptedException e) {
-                return FormValidation.error(e, "Interrupted");
+                return FormValidation.error(e, Messages.interrupted());
             }
         }
 
@@ -292,7 +292,7 @@ public class RichTextPublisher extends Recorder {
          * This human readable name is used in the configuration screen.
          */
         public String getDisplayName() {
-            return "Publish rich text message";
+            return Messages.publish();
         }
 
     }

@@ -155,7 +155,7 @@ public class StaticTextPortlet extends DashboardPortlet {
          * This human readable name is used in the configuration screen.
          */
         public String getDisplayName() {
-            return "Rich Text";
+            return Messages.richText();
         }
 
     }

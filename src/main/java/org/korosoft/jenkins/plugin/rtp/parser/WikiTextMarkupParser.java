@@ -1,6 +1,7 @@
 package org.korosoft.jenkins.plugin.rtp.parser;
 
 import org.korosoft.jenkins.plugin.rtp.MarkupParser;
+import org.korosoft.jenkins.plugin.rtp.Messages;
 import org.sweble.wikitext.engine.CompiledPage;
 import org.sweble.wikitext.engine.Compiler;
 import org.sweble.wikitext.engine.PageId;
@@ -83,11 +84,11 @@ public class WikiTextMarkupParser implements MarkupParser {
             p.go(cp.getPage());
             return w.toString();
         } catch (Exception e) {
-            return "<b>Failed to compile message:</b><br/>" + e.toString();
+            return "<b>" + Messages.failedToCompile() + "</b><br/>" + e.toString();
         }
     }
 
     public String getName() {
-        return "Wiki";
+        return Messages.wikiText();
     }
 }

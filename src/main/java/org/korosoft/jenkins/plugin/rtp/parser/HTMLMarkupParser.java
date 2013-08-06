@@ -3,6 +3,7 @@ package org.korosoft.jenkins.plugin.rtp.parser;
 import org.eclipse.mylyn.wikitext.confluence.core.ConfluenceLanguage;
 import org.eclipse.mylyn.wikitext.core.parser.builder.HtmlDocumentBuilder;
 import org.korosoft.jenkins.plugin.rtp.MarkupParser;
+import org.korosoft.jenkins.plugin.rtp.Messages;
 
 import java.io.StringWriter;
 
@@ -53,6 +54,6 @@ public class HTMLMarkupParser implements MarkupParser {
     }
 
     public String getName() {
-        return "HTML";
+        return Messages.html();
     }
 }

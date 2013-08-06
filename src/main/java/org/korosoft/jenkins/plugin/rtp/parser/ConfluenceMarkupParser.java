@@ -3,7 +3,7 @@ package org.korosoft.jenkins.plugin.rtp.parser;
 import org.eclipse.mylyn.wikitext.confluence.core.ConfluenceLanguage;
 import org.eclipse.mylyn.wikitext.core.parser.builder.HtmlDocumentBuilder;
 import org.korosoft.jenkins.plugin.rtp.MarkupParser;
-import org.sweble.wikitext.engine.utils.SimpleWikiConfiguration;
+import org.korosoft.jenkins.plugin.rtp.Messages;
 
 import java.io.StringWriter;
 
@@ -59,11 +59,11 @@ public class ConfluenceMarkupParser implements MarkupParser {
             parser.parse(markupText);
             return writer.toString();
         } catch (Exception e) {
-            return "<b>Failed to compile message:</b><br/>" + e.toString();
+            return "<b>" + Messages.failedToCompile() + "</b><br/>" + e.toString();
         }
     }
 
     public String getName() {
-        return "Confluence";
+        return Messages.confluence();
     }
 }

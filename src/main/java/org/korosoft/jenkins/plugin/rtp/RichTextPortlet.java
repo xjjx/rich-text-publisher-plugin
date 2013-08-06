@@ -69,7 +69,7 @@ public class RichTextPortlet extends DashboardPortlet {
         try {
             TopLevelItem item = Jenkins.getInstance().getItem(jobName);
             if (!(item instanceof AbstractProject)) {
-                return String.format("Job '%s' not found", jobName);
+                return String.format(Messages.jobNotFound(), jobName);
             }
             AbstractProject<?, ?> project = (AbstractProject<?, ?>) item;
             if (!useLastStable) {
@@ -80,7 +80,7 @@ public class RichTextPortlet extends DashboardPortlet {
                         return getRichTextFromActions(abstractBuild.getActions());
                     }
                 }
-                return "There are no stable builds yet";
+                return Messages.noStableBuildsYet();
             }
         } catch (Exception e) {
             return e.getMessage();
@@ -112,14 +112,14 @@ public class RichTextPortlet extends DashboardPortlet {
     public static class DescriptorImpl extends Descriptor<DashboardPortlet> {
         @Override
         public String getDisplayName() {
-            return "Rich text published within a build";
+            return Messages.buildPortletTitle();
         }
 
         public FormValidation doCheckJobName(@QueryParameter String value) {
             if (value.length() == 0)
-                return FormValidation.error("Please specify job name");
+                return FormValidation.error(Messages.noJobName());
             if (!getAllJobNames().contains(value)) {
-                return FormValidation.error(String.format("Job '%s' not found", value));
+                return FormValidation.error(String.format(Messages.jobNotFound(), value));
             }
             return FormValidation.ok();
         }

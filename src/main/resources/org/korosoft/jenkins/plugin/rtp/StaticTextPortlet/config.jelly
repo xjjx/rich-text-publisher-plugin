@@ -32,13 +32,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <j:set var="yuiSuffix" value="min"/>
     <l:yui module="editor"/>
-    <f:entry title="${%Display name}">
+    <f:entry title="${%rich.text.displayName}">
         <f:textbox name="portlet.name" field="name" default="${descriptor.getDisplayName()}" />
     </f:entry>
-    <f:entry title="Markup language" field="parserName">
+    <f:entry title="${%rich.text.markupLanguage}" field="parserName">
         <f:select/>
     </f:entry>
-    <f:entry title="Publish static rich text" field="text">
+    <f:entry title="${%rich.text.text}" field="text">
         <f:textarea/>
     </f:entry>
 </j:jelly>
