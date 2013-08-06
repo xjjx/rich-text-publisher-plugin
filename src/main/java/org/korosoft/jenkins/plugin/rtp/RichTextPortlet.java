@@ -35,18 +35,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 import hudson.Extension;
-import hudson.model.AbstractProject;
-import hudson.model.Action;
-import hudson.model.Descriptor;
-import hudson.model.TopLevelItem;
+import hudson.model.*;
 import hudson.plugins.view.dashboard.DashboardPortlet;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
-import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Rich text portlet for Jenkins Dashboard plugin.
@@ -58,9 +55,14 @@ import java.util.Collection;
  */
 public class RichTextPortlet extends DashboardPortlet {
     private String jobName;
+    private boolean useLastStable;
 
     public String getJobName() {
         return jobName;
+    }
+
+    public boolean isUseLastStable() {
+        return useLastStable;
     }
 
     public String getRichText() {
@@ -70,22 +72,36 @@ public class RichTextPortlet extends DashboardPortlet {
                 return String.format("Job '%s' not found", jobName);
             }
             AbstractProject<?, ?> project = (AbstractProject<?, ?>) item;
-            StringBuilder result = new StringBuilder();
-            for (Action action : project.getActions()) {
-                if (action instanceof AbstractRichTextAction) {
-                    result.append(((AbstractRichTextAction) action).getRichText());
+            if (!useLastStable) {
+                return getRichTextFromActions(project.getActions());
+            } else {
+                for (AbstractBuild<?, ?> abstractBuild : project.getBuilds()) {
+                    if (abstractBuild.getResult().isBetterOrEqualTo(Result.SUCCESS)) {
+                        return getRichTextFromActions(abstractBuild.getActions());
+                    }
                 }
+                return "There are no stable builds yet";
             }
-            return result.toString();
         } catch (Exception e) {
             return e.getMessage();
         }
     }
 
+    private String getRichTextFromActions(List<Action> actions) {
+        StringBuilder result = new StringBuilder();
+        for (Action action : actions) {
+            if (action instanceof AbstractRichTextAction) {
+                result.append(((AbstractRichTextAction) action).getRichText());
+            }
+        }
+        return result.toString();
+    }
+
     @DataBoundConstructor
-    public RichTextPortlet(String name, String jobName) {
+    public RichTextPortlet(String name, String jobName, boolean useLastStable) {
         super(name);
         this.jobName = jobName;
+        this.useLastStable = useLastStable;
     }
 
     public static Collection<String> getAllJobNames() {

@@ -37,4 +37,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <f:entry title="Job name">
         <f:editableComboBox field="jobName" items="${allJobs}" />
     </f:entry>
+    <f:entry title="Display rich text from last successful build" field="useLastStable">
+        <f:checkbox default="false"/>
+    </f:entry>
 </j:jelly>
