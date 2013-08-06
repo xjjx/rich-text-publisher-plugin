@@ -2,7 +2,8 @@
     <f:entry title="${%Display name}">
         <f:textbox name="portlet.name" field="name" default="${descriptor.getDisplayName()}" />
     </f:entry>
+    <j:invokeStatic var="allJobs" className="org.korosoft.jenkins.plugin.rtp.RichTextPortlet" method="getAllJobNames"/>
     <f:entry title="Job name">
-        <f:textbox name="portlet.jobName" field="jobName" default="" />
+        <f:editableComboBox field="jobName" items="${allJobs}" />
     </f:entry>
 </j:jelly>
