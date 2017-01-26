@@ -47,7 +47,7 @@ import java.util.List;
 
 /**
  * Rich text portlet for Jenkins Dashboard plugin.
- * <p/>
+ *
  * See https://wiki.jenkins-ci.org/display/JENKINS/Dashboard+View for details
  *
  * @author Dmitry Korotkov

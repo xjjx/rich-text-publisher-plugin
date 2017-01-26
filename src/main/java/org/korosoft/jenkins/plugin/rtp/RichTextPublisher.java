@@ -212,7 +212,7 @@ public class RichTextPublisher extends Recorder {
 
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-
+  
         private static transient Map<String, MarkupParser> markupParsers;
         private static transient List<String> markupParserNames;
 
@@ -287,6 +287,7 @@ public class RichTextPublisher extends Recorder {
             // indicates that this builder can be used with all kinds of project types
             return true;
         }
+        
 
         /**
          * This human readable name is used in the configuration screen.

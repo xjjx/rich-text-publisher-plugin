@@ -59,7 +59,7 @@ public class ProjectRichTextAction extends AbstractRichTextAction {
     @Override
     public String getRichText() {
         StringBuilder builder = new StringBuilder();
-        AbstractBuild build = getBuild();
+        AbstractBuild<?, ?> build = getBuild();
         if (build != null) {
             for (AbstractRichTextAction action : build.getActions(AbstractRichTextAction.class)) {
                 builder.append(action.getRichText());
