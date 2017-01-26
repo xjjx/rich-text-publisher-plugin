@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core"
+         xmlns:f="/lib/form"
+         xmlns:l="/lib/layout">
+    <!-- this is where we'd put the GUI for configuration options
+         for the RichTextPublisherStep, if we had any.  This will
+         show up in the Groovy snippet generator. -->
+	<j:set var="yuiSuffix" value="min"/>
+    <l:yui module="editor"/>
+    <f:entry field="parserName" title="${%markupLanguage}">
+    	<f:select/>
+	</f:entry>
+    <f:entry field="stableText" title="${%stableText}">
+        <f:textarea/>
+    </f:entry>
+    <f:advanced>
+    	<f:entry field="isUnstableAsStable" title="${%isUnstableAsStable}">
+            <f:checkbox default="true"/>
+        </f:entry>
+        <f:entry field="unstableText" title="${%unstableText}">
+            <f:textarea/>
+        </f:entry>
+        <f:entry field="isFailedAsStable" title="${%isFailedAsStable}">
+            <f:checkbox default="true"/>
+        </f:entry>
+        <f:entry field="failedText" title="${%failedText}">
+            <f:textarea/>
+        </f:entry>
+    </f:advanced>
+</j:jelly>
