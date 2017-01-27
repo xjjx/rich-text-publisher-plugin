@@ -1,5 +1,7 @@
 # Rich Text Publisher Plugin
 
+Now featuring pipeline plugin support
+
 A plugin adds a configurable post-build step which publishes arbitrary rich text at the Project and Build pages.
 The following markup languages are supported: HTML, WikiText, Confluence. Build parameters or whole files from workspace may be embedded into text.
 
