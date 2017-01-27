@@ -160,6 +160,7 @@ public class RichTextPublisher extends Recorder {
         for (Map.Entry<String, String> entry : build.getEnvironment(listener).entrySet()) {
             vars.put(String.format("ENV:%s", entry.getKey()), entry.getValue());
         }
+        
         vars.putAll(build.getBuildVariables());
 
         Matcher matcher = FILE_VAR_PATTERN.matcher(text);
@@ -254,7 +255,7 @@ public class RichTextPublisher extends Recorder {
             return model;
         }
 
-        public FormValidation doCheckPublishText(@AncestorInPath AbstractProject project, @QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckPublishText(@AncestorInPath AbstractProject<?,?> project, @QueryParameter String value) throws IOException, ServletException {
             try {
                 FilePath workspace = project.getSomeWorkspace();
                 if (workspace == null) {

@@ -38,7 +38,7 @@ public class RichTextPublisherStep extends AbstractStepImpl {
 	private boolean unstableAsStable;
 	private boolean failedAsStable;
 	
-	//private transient MarkupParser markupParser;
+	private transient MarkupParser markupParser;
 	
 	//RichTextPublisher rtp = null;
 	
@@ -102,7 +102,14 @@ public class RichTextPublisherStep extends AbstractStepImpl {
             parserName = "HTML";
         }
         this.parserName = parserName;
-        //this.markupParser = DescriptorImpl.markupParsers.get(parserName);
+        this.markupParser = DescriptorImpl.markupParsers.get(parserName);
+    }
+    
+    public MarkupParser getMarkupParser() {
+        if (markupParser == null) {
+            markupParser = DescriptorImpl.markupParsers.get(parserName);
+        }
+        return markupParser;
     }
  
     
@@ -112,6 +119,10 @@ public class RichTextPublisherStep extends AbstractStepImpl {
 		private static transient Map<String, MarkupParser> markupParsers;
 	    private static transient List<String> markupParserNames;
 		
+	    static {
+            loadParsers();
+        }
+	    
         public DescriptorImpl() {
             super(RichTextPublisherStepExecution.class);
         }
