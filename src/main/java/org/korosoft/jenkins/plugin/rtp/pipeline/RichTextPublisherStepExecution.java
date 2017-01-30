@@ -88,8 +88,9 @@ public class RichTextPublisherStepExecution extends AbstractSynchronousNonBlocki
                 if (matcher.group(1).length() != 4) { // Group is file_sl
                     value = value.replace("\n", "").replace("\r", "");
                 }
-                vars.put(String.format("%s:%s", matcher.group(1), fileName), value);
-                parentvars.put(String.format("%s:%s", matcher.group(1), fileName), value);
+                String key = String.format("%s:%s", matcher.group(1), fileName);
+                vars.put(key, value);
+                parentvars.put(key, value);
             }
             start = matcher.end();
         }
@@ -97,7 +98,7 @@ public class RichTextPublisherStepExecution extends AbstractSynchronousNonBlocki
         AbstractRichTextAction action = new BuildRichTextAction(build, step.getMarkupParser().parse(replaceVars(text, vars)));
         AbstractRichTextAction parentaction = new BuildRichTextAction(build, step.getMarkupParser().parse(replaceVars(text, parentvars)));
 
-        //idk if this could be considered as a workaround
+        //idk if this could be considered as a workaround for adding the text to pipeline page
         if(build.getParent().getActions(BuildRichTextAction.class).isEmpty())
         {
         	build.getParent().addAction(parentaction);
