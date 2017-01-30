@@ -1,7 +1,11 @@
 package org.korosoft.jenkins.plugin.rtp.pipeline;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,13 +18,16 @@ import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.korosoft.jenkins.plugin.rtp.AbstractRichTextAction;
 import org.korosoft.jenkins.plugin.rtp.BuildRichTextAction;
 
+import hudson.ExtensionList;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
+import hudson.model.Action;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
+import jenkins.model.TransientActionFactory;
 
 public class RichTextPublisherStepExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
 
@@ -99,14 +106,7 @@ public class RichTextPublisherStepExecution extends AbstractSynchronousNonBlocki
         AbstractRichTextAction parentaction = new BuildRichTextAction(build, step.getMarkupParser().parse(replaceVars(text, parentvars)));
 
         //idk if this could be considered as a workaround for adding the text to pipeline page
-        if(build.getParent().getActions(BuildRichTextAction.class).isEmpty())
-        {
-        	build.getParent().addAction(parentaction);
-        }
-        else
-        {
-        	build.getParent().replaceAction(parentaction);
-        }
+        build.getParent().replaceAction(parentaction);
         build.getParent().save();
         build.addAction(action);
         build.save();
