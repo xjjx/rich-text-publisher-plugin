@@ -177,7 +177,6 @@ public class RichTextPublisher extends Recorder {
             }
             start = matcher.end();
         }
-
         AbstractRichTextAction action = new BuildRichTextAction(build, getMarkupParser().parse(replaceVars(text, vars)));
         build.addAction(action);
         build.save();

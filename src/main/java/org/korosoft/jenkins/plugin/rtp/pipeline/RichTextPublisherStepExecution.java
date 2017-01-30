@@ -69,9 +69,14 @@ public class RichTextPublisherStepExecution extends AbstractSynchronousNonBlocki
         for (Map.Entry<String, String> entry : build.getEnvironment(listener).entrySet()) {
             vars.put(String.format("ENV:%s", entry.getKey()), entry.getValue());
         }
+        Map<String, String> parentvars = new HashMap<String, String>();
+        for (Map.Entry<String, String> entry : build.getParent().getEnvironment(null, listener).entrySet()) {
+        	parentvars.put(String.format("ENV:%s", entry.getKey()), entry.getValue());
+        }
         
-        //vars.putAll(build.getBuildVariables()); 			// not working, but original code, 
+        //vars.putAll(build.getBuildVariables()); 			// not working, but original code,
         // if there is an alternative this all could be integrated into RichTextPublisher.java and you could call those functions
+        //parentvars.putAll(build.getBuildVariables());
         
         Matcher matcher = FILE_VAR_PATTERN.matcher(text);
         int start = 0;
@@ -84,11 +89,24 @@ public class RichTextPublisherStepExecution extends AbstractSynchronousNonBlocki
                     value = value.replace("\n", "").replace("\r", "");
                 }
                 vars.put(String.format("%s:%s", matcher.group(1), fileName), value);
+                parentvars.put(String.format("%s:%s", matcher.group(1), fileName), value);
             }
             start = matcher.end();
         }
         
         AbstractRichTextAction action = new BuildRichTextAction(build, step.getMarkupParser().parse(replaceVars(text, vars)));
+        AbstractRichTextAction parentaction = new BuildRichTextAction(build, step.getMarkupParser().parse(replaceVars(text, parentvars)));
+
+        //idk if this could be considered as a workaround
+        if(build.getParent().getActions(BuildRichTextAction.class).isEmpty())
+        {
+        	build.getParent().addAction(parentaction);
+        }
+        else
+        {
+        	build.getParent().replaceAction(parentaction);
+        }
+        build.getParent().save();
         build.addAction(action);
         build.save();
 
