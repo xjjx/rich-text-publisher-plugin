@@ -34,7 +34,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
 
-import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.model.Run;
 

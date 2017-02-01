@@ -1,8 +1,11 @@
 package org.korosoft.jenkins.plugin.rtp.pipeline;
 
 import hudson.Extension;
+import hudson.FilePath;
+import hudson.model.AbstractProject;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Publisher;
+import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
 import java.io.IOException;
@@ -12,17 +15,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.servlet.ServletException;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 //import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.HttpResponse;
+import org.kohsuke.stapler.QueryParameter;
 import org.korosoft.jenkins.plugin.rtp.MarkupParser;
+import org.korosoft.jenkins.plugin.rtp.Messages;
 import org.korosoft.jenkins.plugin.rtp.RichTextPublisher;
 import org.korosoft.jenkins.plugin.rtp.RichTextPublisher.DescriptorImpl;
 
@@ -30,6 +41,8 @@ import org.korosoft.jenkins.plugin.rtp.RichTextPublisher.DescriptorImpl;
 public class RichTextPublisherStep extends AbstractStepImpl {
 	
 	private static final Log log = LogFactory.getLog(RichTextPublisherStep.class);
+	
+	private static final transient Pattern FILE_VAR_PATTERN = Pattern.compile("\\$\\{(file|file_sl):([^\\}]+)\\}", Pattern.CASE_INSENSITIVE);
 	
 	private String stableText;
 	private String unstableText;
@@ -40,18 +53,11 @@ public class RichTextPublisherStep extends AbstractStepImpl {
 	
 	private transient MarkupParser markupParser;
 	
-	//RichTextPublisher rtp = null;
-	
 	RichTextPublisherStepExecution test = new RichTextPublisherStepExecution();
 	
 	@DataBoundConstructor
 	public RichTextPublisherStep() {
-		//rtp = new RichTextPublisher(stableText, unstableText, failedText, unstableAsStable, failedAsStable, parserName);
 	}
-	
-	//public RichTextPublisher getRTP() {
-	//	return rtp;
-	//}
 	
 	public String getStableText() {
 	    return stableText;
@@ -129,12 +135,12 @@ public class RichTextPublisherStep extends AbstractStepImpl {
 
         @Override
         public String getFunctionName() {
-            return "richTextPublisher";
+            return "rtp";
         }
 
         @Override
         public String getDisplayName() {
-            return "Publish some rich text";
+            return "Publish rich text message";
         }
         
         public HttpResponse doFillParserNameItems() {
@@ -168,6 +174,35 @@ public class RichTextPublisherStep extends AbstractStepImpl {
                 } catch (Exception e) {
                     log.error(e);
                 }
+            }
+        }
+        
+        public FormValidation doCheckPublishText(@AncestorInPath AbstractProject<?,?> project, @QueryParameter String value) throws IOException, ServletException {
+            try {
+                FilePath workspace = project.getSomeWorkspace();
+                if (workspace == null) {
+                    return FormValidation.warning(Messages.neverBuilt());
+                }
+                Matcher matcher = FILE_VAR_PATTERN.matcher(value);
+                int start = 0;
+                List<String> missingFiles = new ArrayList<String>();
+                while (matcher.find(start)) {
+                    String fileName = matcher.group(2);
+                    FilePath filePath = new FilePath(workspace, fileName);
+                    if (!filePath.exists()) {
+                        missingFiles.add(fileName);
+                    }
+                    start = matcher.end();
+                }
+                if (missingFiles.isEmpty()) {
+                    return FormValidation.ok();
+                }
+                if (missingFiles.size() == 1) {
+                    return FormValidation.warning(Messages.fileNotFound(), missingFiles.get(0));
+                }
+                return FormValidation.warning(Messages.filesNotFound(), StringUtils.join(missingFiles, ", "));
+            } catch (InterruptedException e) {
+                return FormValidation.error(e, Messages.interrupted());
             }
         }
     }

@@ -73,11 +73,11 @@ public class RichTextPortlet extends DashboardPortlet {
             }
             AbstractProject<?, ?> project = (AbstractProject<?, ?>) item;
             if (!useLastStable) {
-                return getRichTextFromActions(project.getActions());
+                return getRichTextFromActions(project.getActions(AbstractRichTextAction.class));
             } else {
                 for (AbstractBuild<?, ?> abstractBuild : project.getBuilds()) {
                     if (abstractBuild.getResult().isBetterOrEqualTo(Result.SUCCESS)) {
-                        return getRichTextFromActions(abstractBuild.getActions());
+                        return getRichTextFromActions(abstractBuild.getActions(AbstractRichTextAction.class));
                     }
                 }
                 return Messages.noStableBuildsYet();
@@ -87,7 +87,7 @@ public class RichTextPortlet extends DashboardPortlet {
         }
     }
 
-    private String getRichTextFromActions(List<Action> actions) {
+    private String getRichTextFromActions(List<AbstractRichTextAction> actions) {
         StringBuilder result = new StringBuilder();
         for (Action action : actions) {
             if (action instanceof AbstractRichTextAction) {

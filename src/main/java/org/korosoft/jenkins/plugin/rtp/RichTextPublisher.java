@@ -44,15 +44,20 @@ import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.tasks.SimpleBuildStep;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,7 +71,7 @@ import java.util.regex.Pattern;
  * @author Dmitry Korotkov
  * @since 1.0
  */
-public class RichTextPublisher extends Recorder {
+public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
     private static final Log log = LogFactory.getLog(RichTextPublisher.class);
 
     private static final transient Pattern FILE_VAR_PATTERN = Pattern.compile("\\$\\{(file|file_sl):([^\\}]+)\\}", Pattern.CASE_INSENSITIVE);
@@ -145,45 +150,6 @@ public class RichTextPublisher extends Recorder {
         this.markupParser = DescriptorImpl.markupParsers.get(parserName);
     }
 
-    @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-        final String text;
-        if (build.getResult().isBetterOrEqualTo(Result.SUCCESS)) {
-            text = stableText;
-        } else if (build.getResult().isBetterOrEqualTo(Result.UNSTABLE)) {
-            text = unstableAsStable ? stableText : unstableText;
-        } else {
-            text = failedAsStable ? stableText : failedText;
-        }
-
-        Map<String, String> vars = new HashMap<String, String>();
-        for (Map.Entry<String, String> entry : build.getEnvironment(listener).entrySet()) {
-            vars.put(String.format("ENV:%s", entry.getKey()), entry.getValue());
-        }
-        
-        vars.putAll(build.getBuildVariables());
-
-        Matcher matcher = FILE_VAR_PATTERN.matcher(text);
-        int start = 0;
-        while (matcher.find(start)) {
-            String fileName = matcher.group(2);
-            FilePath filePath = new FilePath(build.getWorkspace(), fileName);
-            if (filePath.exists()) {
-                String value = filePath.readToString();
-                if (matcher.group(1).length() != 4) { // Group is file_sl
-                    value = value.replace("\n", "").replace("\r", "");
-                }
-                vars.put(String.format("%s:%s", matcher.group(1), fileName), value);
-            }
-            start = matcher.end();
-        }
-        AbstractRichTextAction action = new BuildRichTextAction(build, getMarkupParser().parse(replaceVars(text, vars)));
-        build.addAction(action);
-        build.save();
-
-        return true;
-    }
-
     private MarkupParser getMarkupParser() {
         if (markupParser == null) {
             markupParser = DescriptorImpl.markupParsers.get(parserName);
@@ -205,10 +171,63 @@ public class RichTextPublisher extends Recorder {
         return BuildStepMonitor.NONE;
     }
 
+    
     @Override
-    public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
-        return Collections.singletonList(new ProjectRichTextAction(project, stableText));
-    }
+	public void perform(@Nonnull Run<?, ?> build, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
+		
+		listener.getLogger().println("RTP: Started!");
+		
+		final String text;
+		if (build.getResult() == null){
+			build.setResult(Result.ABORTED);
+			listener.getLogger().println("RTP: Buildresult is null, maybe you forgot to set it manually?");
+			listener.getLogger().println("RTP: Aborting build!");
+			text = "<h2>RTP: Build was aborted, because its result was null</h2>"
+					+ "<p>This build has been aborted, because RTP could not determine the result of it. <br>"
+					+ "If your prior build steps do not modify the buildresult this error can occure! <br>"
+					+ "To fix this simply set the buildresult by yourself with \"currentBuild.result = \'SUCCESS\'\" for example.</p>";
+		} else if (build.getResult().isBetterOrEqualTo(Result.SUCCESS)) {
+            text = stableText;
+        } else if (build.getResult().isBetterOrEqualTo(Result.UNSTABLE)) {
+            text = unstableAsStable ? stableText : unstableText;
+        } else {
+            text = failedAsStable ? stableText : failedText;
+        }
+
+        Map<String, String> vars = new HashMap<String, String>();
+        for (Map.Entry<String, String> entry : build.getEnvironment(listener).entrySet()) {
+            vars.put(String.format("ENV:%s", entry.getKey()), entry.getValue());
+        }
+        
+        //vars.putAll(build.getBuildVariables());	// old code, but not needed anymore
+    
+        Matcher matcher = FILE_VAR_PATTERN.matcher(text);
+        int start = 0;
+        while (matcher.find(start)) {
+            String fileName = matcher.group(2);
+            FilePath filePath = new FilePath(workspace, fileName);
+            if (filePath.exists()) {
+                String value = filePath.readToString();
+                if (matcher.group(1).length() != 4) { // Group is file_sl
+                    value = value.replace("\n", "").replace("\r", "");
+                }
+                vars.put(String.format("%s:%s", matcher.group(1), fileName), value);
+            }
+            start = matcher.end();
+        }
+        
+        AbstractRichTextAction action = new BuildRichTextAction(build, getMarkupParser().parse(replaceVars(text, vars)));
+        build.replaceAction(action);
+        build.save();
+        
+        listener.getLogger().println("RTP: Done!");
+		return;
+	}
+
+    //@Override		// removing this whole function fixes the bug that richText is displayed twice on job page
+    //public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
+    //    return Collections.singletonList(new ProjectRichTextAction(project, stableText));
+    //}
 
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
@@ -286,8 +305,7 @@ public class RichTextPublisher extends Recorder {
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             // indicates that this builder can be used with all kinds of project types
             return true;
-        }
-        
+        } 
 
         /**
          * This human readable name is used in the configuration screen.
@@ -295,6 +313,7 @@ public class RichTextPublisher extends Recorder {
         public String getDisplayName() {
             return Messages.publish();
         }
-
+        
     }
+    
 }
