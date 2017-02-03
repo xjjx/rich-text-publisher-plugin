@@ -50,8 +50,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
-import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.HttpResponse;
@@ -76,21 +74,26 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
 
     private static final transient Pattern FILE_VAR_PATTERN = Pattern.compile("\\$\\{(file|file_sl):([^\\}]+)\\}", Pattern.CASE_INSENSITIVE);
     private String stableText;
-    private String unstableText;
-    private String failedText;
+    private String unstableText = "";
+    private String failedText = "";
+    private String abortedText = "";
+    private String nullAction = "1";
     private Boolean unstableAsStable = true;
     private Boolean failedAsStable = true;
+    private Boolean abortedAsStable = true;
     private String parserName;
-
     private transient MarkupParser markupParser;
 
     @DataBoundConstructor
-    public RichTextPublisher(String stableText, String unstableText, String failedText, Boolean unstableAsStable, Boolean failedAsStable, String parserName) {
+    public RichTextPublisher(String stableText, String unstableText, String failedText, String abortedText, Boolean unstableAsStable, Boolean failedAsStable, Boolean abortedAsStable, String parserName, String nullAction) {
         this.stableText = stableText;
         this.unstableText = unstableText;
         this.failedText = failedText;
+        this.abortedText = abortedText;
+        this.nullAction = nullAction;
         this.unstableAsStable = unstableAsStable == null ? true : unstableAsStable;
         this.failedAsStable = failedAsStable == null ? true : failedAsStable;
+        this.abortedAsStable = abortedAsStable == null ? true : abortedAsStable;
         setParserName(parserName);
     }
 
@@ -121,6 +124,14 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
     public void setFailedText(String failedText) {
         this.failedText = failedText;
     }
+    
+    public String getAbortedText() {
+	    return abortedText;
+	}
+
+	public void setAbortedText(String abortedText) {
+		this.abortedText = abortedText;
+	}
 
     public boolean isUnstableAsStable() {
         return unstableAsStable;
@@ -136,6 +147,14 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
 
     public void setFailedAsStable(boolean failedAsStable) {
         this.failedAsStable = failedAsStable;
+    }
+    
+    public boolean isAbortedAsStable() {
+        return abortedAsStable;
+    }
+
+    public void setAbortedAsStable(boolean abortedAsStable) {
+        this.abortedAsStable = abortedAsStable;
     }
 
     public String getParserName() {
@@ -179,20 +198,29 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
 		
 		final String text;
 		if (build.getResult() == null){
-			build.setResult(Result.ABORTED);
-			listener.getLogger().println("RTP: Buildresult is null, maybe you forgot to set it manually?");
-			listener.getLogger().println("RTP: Aborting build!");
-			text = "<h2>RTP: Build was aborted, because its result was null</h2>"
-					+ "<p>This build has been aborted, because RTP could not determine the result of it. <br>"
-					+ "If your prior build steps do not modify the buildresult this error can occure! <br>"
-					+ "To fix this simply set the buildresult by yourself with \"currentBuild.result = \'SUCCESS\'\" for example.</p>";
-		} else if (build.getResult().isBetterOrEqualTo(Result.SUCCESS)) {
-            text = stableText;
-        } else if (build.getResult().isBetterOrEqualTo(Result.UNSTABLE)) {
-            text = unstableAsStable ? stableText : unstableText;
-        } else {
-            text = failedAsStable ? stableText : failedText;
-        }
+			if (nullAction == "1") {
+				text = stableText;
+			} else if (nullAction == "2") {
+				text = unstableText;
+			} else if (nullAction == "3") {
+				text = abortedText;
+			} else if (nullAction == "4") {
+				text = failedText;
+			} else {
+				listener.getLogger().println("RTP: Ignoring buildresult==null aka publishing nothing!");
+				return;
+			}
+		} else {
+			if (build.getResult() == Result.SUCCESS) {
+	            text = stableText;
+	        } else if (build.getResult() == Result.UNSTABLE) {
+	            text = unstableAsStable ? stableText : unstableText;
+	        } else if (build.getResult() == Result.ABORTED) {
+	        	text = abortedAsStable ? stableText : abortedText;
+	        } else {
+	            text = failedAsStable ? stableText : failedText;
+	        }
+		}
 
         Map<String, String> vars = new HashMap<String, String>();
         for (Map.Entry<String, String> entry : build.getEnvironment(listener).entrySet()) {
@@ -217,7 +245,7 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
         }
         
         AbstractRichTextAction action = new BuildRichTextAction(build, getMarkupParser().parse(replaceVars(text, vars)));
-        build.replaceAction(action);
+        build.addAction(action);
         build.save();
         
         listener.getLogger().println("RTP: Done!");

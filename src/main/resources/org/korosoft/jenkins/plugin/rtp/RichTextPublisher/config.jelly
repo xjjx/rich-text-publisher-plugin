@@ -54,5 +54,20 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <f:entry title="${%rich.text.failedText}" field="failedText">
             <f:textarea/>
         </f:entry>
+        <f:entry title="${%rich.text.abortedAsStable}" field="abortedAsStable">
+            <f:checkbox default="true"/>
+        </f:entry>
+        <f:entry title="${%rich.text.abortedText}" field="abortedText">
+            <f:textarea/>
+        </f:entry>
+        <!-- <f:entry name="nullSelection" title="${%rich.text.nullSelection}">
+		    <select name="nullSelection">
+		        <option value="ignore">Ignore null</option>
+		        <option value="stable">Publish stable</option>
+		        <option value="unstable">Publish unstable</option>
+		        <option value="aborted">Publish aborted</option>
+		        <option value="failed">Publish failed</option>
+		    </select>
+		</f:entry> -->
     </f:advanced>
 </j:jelly>

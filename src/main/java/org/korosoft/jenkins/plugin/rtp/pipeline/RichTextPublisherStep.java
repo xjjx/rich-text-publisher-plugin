@@ -3,8 +3,6 @@ package org.korosoft.jenkins.plugin.rtp.pipeline;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.AbstractProject;
-import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
@@ -34,8 +32,6 @@ import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
 import org.korosoft.jenkins.plugin.rtp.MarkupParser;
 import org.korosoft.jenkins.plugin.rtp.Messages;
-import org.korosoft.jenkins.plugin.rtp.RichTextPublisher;
-import org.korosoft.jenkins.plugin.rtp.RichTextPublisher.DescriptorImpl;
 
 
 public class RichTextPublisherStep extends AbstractStepImpl {
@@ -45,15 +41,16 @@ public class RichTextPublisherStep extends AbstractStepImpl {
 	private static final transient Pattern FILE_VAR_PATTERN = Pattern.compile("\\$\\{(file|file_sl):([^\\}]+)\\}", Pattern.CASE_INSENSITIVE);
 	
 	private String stableText;
-	private String unstableText;
-	private String failedText;
+	private String unstableText = "";
+	private String failedText = "";
+	private String abortedText = "";
 	private String parserName;
-	private boolean unstableAsStable;
-	private boolean failedAsStable;
+	private String nullAction = "0";
+	private Boolean unstableAsStable = true;
+	private Boolean failedAsStable = true;
+	private Boolean abortedAsStable = true;
 	
 	private transient MarkupParser markupParser;
-	
-	RichTextPublisherStepExecution test = new RichTextPublisherStepExecution();
 	
 	@DataBoundConstructor
 	public RichTextPublisherStep() {
@@ -83,20 +80,44 @@ public class RichTextPublisherStep extends AbstractStepImpl {
 		this.failedText = failedText==null? null:failedText;
 	}
 	
-	public boolean getIsUnstableAsStable() {
+	public String getAbortedText() {
+	    return abortedText;
+	}
+	@DataBoundSetter 
+	public void setAbortedText(String abortedText) {
+		this.abortedText = abortedText==null? null:abortedText;
+	}
+	
+	public boolean getUnstableAsStable() {
         return unstableAsStable;
     }
     @DataBoundSetter
-    public void setIsUnstableAsStable(boolean unstableAsStable) {
+    public void setUnstableAsStable(boolean unstableAsStable) {
         this.unstableAsStable = unstableAsStable;
     }
 
-    public boolean getIsFailedAsStable() {
+    public boolean getFailedAsStable() {
         return failedAsStable;
     }
     @DataBoundSetter
-    public void setIsFailedAsStable(boolean failedAsStable) {
+    public void setFailedAsStable(boolean failedAsStable) {
         this.failedAsStable = failedAsStable;
+    }
+    
+    public boolean getAbortedAsStable() {
+        return abortedAsStable;
+    }
+    @DataBoundSetter
+    public void setAbortedAsStable(boolean abortedAsStable) {
+        this.abortedAsStable = abortedAsStable;
+    }
+    
+    public String getNullAction() {
+    	return nullAction;
+    }
+    @DataBoundSetter
+    public void setNullAction(String nullAction) {
+    	this.nullAction = nullAction==null? "0":nullAction;
     }
     
     public String getParserName() {
@@ -104,10 +125,7 @@ public class RichTextPublisherStep extends AbstractStepImpl {
     }
     @DataBoundSetter
     public void setParserName(String parserName) {
-        if (parserName == null) {
-            parserName = "HTML";
-        }
-        this.parserName = parserName;
+        this.parserName = parserName==null? "HTML":parserName;
         this.markupParser = DescriptorImpl.markupParsers.get(parserName);
     }
     
@@ -140,7 +158,17 @@ public class RichTextPublisherStep extends AbstractStepImpl {
 
         @Override
         public String getDisplayName() {
-            return "Publish rich text message";
+        	return Messages.publish();
+        }
+        
+        public HttpResponse doFillNullActionItems() {
+            ListBoxModel items = new ListBoxModel();
+            items.add("Ignore", "0");
+            items.add("Publish stable", "1");
+            items.add("Publish unstable", "2");
+            items.add("Publish aborted", "3");
+            items.add("Publish failed", "4");
+            return items;
         }
         
         public HttpResponse doFillParserNameItems() {

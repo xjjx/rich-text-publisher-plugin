@@ -16,17 +16,26 @@
         <f:textarea/>
     </f:entry>
     <f:advanced>
-    	<f:entry field="isUnstableAsStable" title="${%rich.text.unstableAsStable}">
+    	<f:entry field="unstableAsStable" title="${%rich.text.unstableAsStable}">
             <f:checkbox default="true"/>
         </f:entry>
         <f:entry field="unstableText" title="${%rich.text.unstableText}">
             <f:textarea/>
         </f:entry>
-        <f:entry field="isFailedAsStable" title="${%rich.text.failedAsStable}">
+        <f:entry field="failedAsStable" title="${%rich.text.failedAsStable}">
             <f:checkbox default="true"/>
         </f:entry>
         <f:entry field="failedText" title="${%rich.text.failedText}">
             <f:textarea/>
         </f:entry>
+        <f:entry field="abortedAsStable" title="${%rich.text.abortedAsStable}">
+            <f:checkbox default="true"/>
+        </f:entry>
+        <f:entry field="abortedText" title="${%rich.text.abortedText}">
+            <f:textarea/>
+        </f:entry>
+        <f:entry field="nullAction" title="${%rich.text.nullActionSelect}">
+		    <f:select />
+		</f:entry>
     </f:advanced>
 </j:jelly>
