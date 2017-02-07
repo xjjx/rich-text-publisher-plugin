@@ -330,7 +330,8 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
             }
         }
 
-        public boolean isApplicable(Class<? extends AbstractProject> aClass) {
+        @SuppressWarnings("rawtypes")
+		public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             // indicates that this builder can be used with all kinds of project types
             return true;
         } 

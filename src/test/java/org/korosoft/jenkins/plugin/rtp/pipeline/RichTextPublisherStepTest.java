@@ -25,9 +25,9 @@ public class RichTextPublisherStepTest extends Assert {
                 "  rtp abortedAsStable: false, abortedText: 'Aborted Text', failedAsStable: false, failedText: 'Failed Text', parserName: 'WikiText', stableText: 'Stable Text', unstableAsStable: false, unstableText: 'Unstable Text'",
                 "}"), "\n")));
 		
+		// raises error "No such DSL method 'rtp' found among [build, checkout, input, load, node, parallel, stage, stash, unstash, ws]"
 		WorkflowRun w = j.assertBuildStatusSuccess(foo.scheduleBuild2(0).get());
 		
-		//assertEquals(true, w);	// raises error "No such DSL method 'rtp' found among [build, checkout, input, load, node, parallel, stage, stash, unstash, ws]"
 		assertEquals(true, true);
 	}
 
