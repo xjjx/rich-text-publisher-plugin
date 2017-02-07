@@ -198,10 +198,9 @@
     </pluginRepositories>
 
     <scm>
-		<connection>scm:git:git@github.com:enwi/${project.artifactId}.git</connection>
-		<developerConnection>scm:git:git@github.com:enwi/${project.artifactId}.git</developerConnection>
-		<url>https://github.com/enwi/${project.artifactId}</url>
- 		<tag>HEAD</tag>
+		<connection>scm:git:ssh://github.com/jenkinsci/${project.artifactId}.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/${project.artifactId}.git</developerConnection>
+		<url>https://github.com/jenkinsci/${project.artifactId}</url>
  	</scm>
 
     <properties>
