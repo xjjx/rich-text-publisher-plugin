@@ -67,7 +67,15 @@ public class RichTextPortlet extends DashboardPortlet {
 
     public String getRichText() {
         try {
-            TopLevelItem item = Jenkins.getInstance().getItem(jobName);
+        	Jenkins j = Jenkins.getInstance();
+        	if (j == null) {
+        		throw new IllegalStateException("Jenkins.getInstance() is null!");
+        	}
+            TopLevelItem item = j.getItem(jobName);
+            if (item == null) {
+            	throw new IllegalStateException("Jenkins.getInstance().getItem(jobName) is null!");
+            }
+
             if (!(item instanceof AbstractProject)) {
                 return String.format(Messages.jobNotFound(), jobName);
             }
@@ -76,7 +84,12 @@ public class RichTextPortlet extends DashboardPortlet {
                 return getRichTextFromActions(project.getActions(AbstractRichTextAction.class));
             } else {
                 for (AbstractBuild<?, ?> abstractBuild : project.getBuilds()) {
-                    if (abstractBuild.getResult().isBetterOrEqualTo(Result.SUCCESS)) {
+                	
+                	Result res = abstractBuild.getResult();
+                	if(res == null) {
+                		throw new IllegalStateException("abstractBuild.getResult() is null!");
+                	}
+                    if (res.isBetterOrEqualTo(Result.SUCCESS)) {
                         return getRichTextFromActions(abstractBuild.getActions(AbstractRichTextAction.class));
                     }
                 }
@@ -105,7 +118,11 @@ public class RichTextPortlet extends DashboardPortlet {
     }
 
     public static Collection<String> getAllJobNames() {
-        return Jenkins.getInstance().getJobNames();
+    	Jenkins j = Jenkins.getInstance();
+    	if (j == null) {
+    		throw new IllegalStateException("Jenkins.getInstance() is null!");
+    	}
+        return j.getJobNames();
     }
 
     @Extension

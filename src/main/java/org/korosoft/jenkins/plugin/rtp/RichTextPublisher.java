@@ -91,9 +91,9 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
         this.failedText = failedText;
         this.abortedText = abortedText;
         this.nullAction = nullAction;
-        this.unstableAsStable = unstableAsStable == null ? true : unstableAsStable;
-        this.failedAsStable = failedAsStable == null ? true : failedAsStable;
-        this.abortedAsStable = abortedAsStable == null ? true : abortedAsStable;
+        this.unstableAsStable = unstableAsStable == null ? Boolean.TRUE : unstableAsStable;
+        this.failedAsStable = failedAsStable == null ? Boolean.TRUE : failedAsStable;
+        this.abortedAsStable = abortedAsStable == null ? Boolean.TRUE : abortedAsStable;
         setParserName(parserName);
     }
 
