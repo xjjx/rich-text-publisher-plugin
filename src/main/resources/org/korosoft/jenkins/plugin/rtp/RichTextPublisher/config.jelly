@@ -29,45 +29,39 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
-<?jelly escape-by-default='true'?> 
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core"
          xmlns:f="/lib/form"
          xmlns:l="/lib/layout">
-    <j:set var="yuiSuffix" value="min"/>
+	<j:set var="yuiSuffix" value="min"/>
     <l:yui module="editor"/>
-    <f:entry title="${%rich.text.markupLanguage}" field="parserName">
-        <f:select/>
-    </f:entry>
-    <f:entry title="${%rich.text.stableText}" field="stableText">
+    <f:entry field="parserName" title="${%rich.text.markupLanguage}">
+    	<f:select/>
+	</f:entry>
+    <f:entry field="stableText" title="${%rich.text.stableText}">
         <f:textarea/>
     </f:entry>
     <f:advanced>
-        <f:entry title="${%rich.text.unstableAsStable}" field="unstableAsStable">
+    	<f:entry field="unstableAsStable" title="${%rich.text.unstableAsStable}">
             <f:checkbox default="true"/>
         </f:entry>
-        <f:entry title="${%rich.text.unstableText}" field="unstableText">
+        <f:entry field="unstableText" title="${%rich.text.unstableText}">
             <f:textarea/>
         </f:entry>
-        <f:entry title="${%rich.text.failedAsStable}" field="failedAsStable">
+        <f:entry field="failedAsStable" title="${%rich.text.failedAsStable}">
             <f:checkbox default="true"/>
         </f:entry>
-        <f:entry title="${%rich.text.failedText}" field="failedText">
+        <f:entry field="failedText" title="${%rich.text.failedText}">
             <f:textarea/>
         </f:entry>
-        <f:entry title="${%rich.text.abortedAsStable}" field="abortedAsStable">
+        <f:entry field="abortedAsStable" title="${%rich.text.abortedAsStable}">
             <f:checkbox default="true"/>
         </f:entry>
-        <f:entry title="${%rich.text.abortedText}" field="abortedText">
+        <f:entry field="abortedText" title="${%rich.text.abortedText}">
             <f:textarea/>
         </f:entry>
-        <!-- <f:entry name="nullSelection" title="${%rich.text.nullSelection}">
-		    <select name="nullSelection">
-		        <option value="ignore">Ignore null</option>
-		        <option value="stable">Publish stable</option>
-		        <option value="unstable">Publish unstable</option>
-		        <option value="aborted">Publish aborted</option>
-		        <option value="failed">Publish failed</option>
-		    </select>
-		</f:entry> -->
+        <f:entry field="nullAction" title="${%rich.text.nullActionSelect}">
+		    <f:select />
+		</f:entry>
     </f:advanced>
 </j:jelly>

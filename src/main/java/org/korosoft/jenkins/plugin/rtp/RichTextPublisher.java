@@ -156,6 +156,14 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
     public void setAbortedAsStable(boolean abortedAsStable) {
         this.abortedAsStable = abortedAsStable;
     }
+    
+    public String getNullAction() {
+    	return nullAction;
+    }
+
+    public void setNullAction(String nullAction) {
+    	this.nullAction = nullAction==null? "0":nullAction;
+    }
 
     public String getParserName() {
         return parserName;
@@ -252,11 +260,6 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
 		return;
 	}
 
-    //@Override		// removing this whole function fixes the bug that richText is displayed twice on job page
-    //public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
-    //    return Collections.singletonList(new ProjectRichTextAction(project, stableText));
-    //}
-
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
   
@@ -291,6 +294,16 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
                 }
             }
         }
+        
+        public HttpResponse doFillNullActionItems() {
+            ListBoxModel items = new ListBoxModel();
+            items.add("Ignore", "0");
+            items.add("Publish stable", "1");
+            items.add("Publish unstable", "2");
+            items.add("Publish aborted", "3");
+            items.add("Publish failed", "4");
+            return items;
+        }
 
         public HttpResponse doFillParserNameItems() {
             loadParsers();
@@ -301,12 +314,12 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
             return model;
         }
 
-        public FormValidation doCheckPublishText(@AncestorInPath AbstractProject<?,?> project, @QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckPublishText(@AncestorInPath Job<?,?> project, @QueryParameter String value) throws IOException, ServletException {
             try {
-                FilePath workspace = project.getSomeWorkspace();
-                if (workspace == null) {
-                    return FormValidation.warning(Messages.neverBuilt());
-                }
+            	FilePath workspace = new FilePath(project.getBuildDir());//project.getSomeWorkspace();
+                //if (workspace == null) {
+                //    return FormValidation.warning(Messages.neverBuilt());
+                //}
                 Matcher matcher = FILE_VAR_PATTERN.matcher(value);
                 int start = 0;
                 List<String> missingFiles = new ArrayList<String>();
@@ -330,6 +343,7 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
             }
         }
 
+        @Override
         @SuppressWarnings("rawtypes")
 		public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             // indicates that this builder can be used with all kinds of project types
@@ -339,6 +353,7 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
         /**
          * This human readable name is used in the configuration screen.
          */
+        @Override
         public String getDisplayName() {
             return Messages.publish();
         }

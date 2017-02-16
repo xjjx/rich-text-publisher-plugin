@@ -3,6 +3,7 @@ package org.korosoft.jenkins.plugin.rtp.pipeline;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.AbstractProject;
+import hudson.model.Job;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
@@ -205,12 +206,12 @@ public class RichTextPublisherStep extends AbstractStepImpl {
             }
         }
         
-        public FormValidation doCheckPublishText(@AncestorInPath AbstractProject<?,?> project, @QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckPublishText(@AncestorInPath Job<?,?> project, @QueryParameter String value) throws IOException, ServletException {
             try {
-                FilePath workspace = project.getSomeWorkspace();
-                if (workspace == null) {
-                    return FormValidation.warning(Messages.neverBuilt());
-                }
+            	FilePath workspace = new FilePath(project.getBuildDir());//project.getSomeWorkspace();
+                //if (workspace == null) {
+                //    return FormValidation.warning(Messages.neverBuilt());
+                //}
                 Matcher matcher = FILE_VAR_PATTERN.matcher(value);
                 int start = 0;
                 List<String> missingFiles = new ArrayList<String>();
