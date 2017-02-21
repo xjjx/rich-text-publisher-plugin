@@ -71,26 +71,27 @@ public class RichTextPortlet extends DashboardPortlet {
         	if (j == null) {
         		throw new IllegalStateException("Jenkins.getInstance() is null!");
         	}
-            TopLevelItem item = j.getItem(jobName);
-            if (item == null) {
-            	throw new IllegalStateException("Jenkins.getInstance().getItem(jobName) is null!");
-            }
-
+        	
+            Item item = j.getItem(jobName);
             if (!(item instanceof AbstractProject)) {
-                return String.format(Messages.jobNotFound(), jobName);
+            	item = j.getItemByFullName(jobName);
             }
-            AbstractProject<?, ?> project = (AbstractProject<?, ?>) item;
+            if (item == null) {
+            	return String.format(Messages.jobNotFound(), jobName);
+            }
+            
+            Job<?, ?> project = (Job<?, ?>) item;
             if (!useLastStable) {
                 return getRichTextFromActions(project.getActions(AbstractRichTextAction.class));
             } else {
-                for (AbstractBuild<?, ?> abstractBuild : project.getBuilds()) {
+                for (Run<?, ?> build : project.getBuilds()) {
                 	
-                	Result res = abstractBuild.getResult();
+                	Result res = build.getResult();
                 	if(res == null) {
                 		throw new IllegalStateException("abstractBuild.getResult() is null!");
                 	}
                     if (res.isBetterOrEqualTo(Result.SUCCESS)) {
-                        return getRichTextFromActions(abstractBuild.getActions(AbstractRichTextAction.class));
+                        return getRichTextFromActions(build.getActions(AbstractRichTextAction.class));
                     }
                 }
                 return Messages.noStableBuildsYet();
