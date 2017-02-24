@@ -84,14 +84,14 @@ public class RichTextPortlet extends DashboardPortlet {
             if (!useLastStable) {
                 return getRichTextFromActions(project.getActions(AbstractRichTextAction.class));
             } else {
-                for (Run<?, ?> build : project.getBuilds()) {
+                for (Run<?, ?> run : project.getBuilds()) {
                 	
-                	Result res = build.getResult();
+                	Result res = run.getResult();
                 	if(res == null) {
-                		throw new IllegalStateException("abstractBuild.getResult() is null!");
+                		throw new IllegalStateException("run.getResult() is null!");
                 	}
                     if (res.isBetterOrEqualTo(Result.SUCCESS)) {
-                        return getRichTextFromActions(build.getActions(AbstractRichTextAction.class));
+                        return getRichTextFromActions(run.getActions(AbstractRichTextAction.class));
                     }
                 }
                 return Messages.noStableBuildsYet();
