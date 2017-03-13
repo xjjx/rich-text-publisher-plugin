@@ -1,5 +1,9 @@
 package org.korosoft.jenkins.plugin.rtp;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 /*
 
 The New BSD License
@@ -34,7 +38,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
 
-import hudson.model.AbstractBuild;
+import hudson.model.Action;
+import hudson.model.Run;
+import jenkins.tasks.SimpleBuildStep;
 
 /**
  * Rich text action for builds
@@ -42,9 +48,10 @@ import hudson.model.AbstractBuild;
  * @author Dmitry Korotkov
  * @since 1.0
  */
-public class BuildRichTextAction extends AbstractRichTextAction {
-    private final AbstractBuild<?, ?> build;
+public class BuildRichTextAction extends AbstractRichTextAction implements SimpleBuildStep.LastBuildAction {
+    private final Run<?, ?> build;
     private final String richText;
+    private List<BuildRichTextAction> projectActions; 
 
     @Override
     public String getRichText() {
@@ -52,13 +59,22 @@ public class BuildRichTextAction extends AbstractRichTextAction {
     }
 
     @Override
-    public AbstractBuild<?, ?> getBuild() {
+    public Run<?, ?> getBuild() {
         return build;
     }
-
-    public BuildRichTextAction(AbstractBuild<?, ?> build, String richText) {
+    
+    public BuildRichTextAction(Run<?, ?> build, String richText) {
         this.build = build;
         this.richText = richText;
+        
+        List<BuildRichTextAction> projectActions = new ArrayList<>();  
+        projectActions.add(this);  
+        this.projectActions = projectActions;  
+
     }
 
+	@Override
+	public Collection<? extends Action> getProjectActions() {
+		return this.projectActions; 
+	}
 }

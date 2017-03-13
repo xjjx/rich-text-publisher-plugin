@@ -47,7 +47,7 @@ import java.util.List;
 
 /**
  * Rich text portlet for Jenkins Dashboard plugin.
- * <p/>
+ *
  * See https://wiki.jenkins-ci.org/display/JENKINS/Dashboard+View for details
  *
  * @author Dmitry Korotkov
@@ -67,17 +67,31 @@ public class RichTextPortlet extends DashboardPortlet {
 
     public String getRichText() {
         try {
-            TopLevelItem item = Jenkins.getInstance().getItem(jobName);
+        	Jenkins j = Jenkins.getInstance();
+        	if (j == null) {
+        		throw new IllegalStateException("Jenkins.getInstance() is null!");
+        	}
+        	
+            Item item = j.getItem(jobName);
             if (!(item instanceof AbstractProject)) {
-                return String.format(Messages.jobNotFound(), jobName);
+            	item = j.getItemByFullName(jobName);
             }
-            AbstractProject<?, ?> project = (AbstractProject<?, ?>) item;
+            if (item == null) {
+            	return String.format(Messages.jobNotFound(), jobName);
+            }
+            
+            Job<?, ?> project = (Job<?, ?>) item;
             if (!useLastStable) {
-                return getRichTextFromActions(project.getActions());
+                return getRichTextFromActions(project.getActions(AbstractRichTextAction.class));
             } else {
-                for (AbstractBuild<?, ?> abstractBuild : project.getBuilds()) {
-                    if (abstractBuild.getResult().isBetterOrEqualTo(Result.SUCCESS)) {
-                        return getRichTextFromActions(abstractBuild.getActions());
+                for (Run<?, ?> run : project.getBuilds()) {
+                	
+                	Result res = run.getResult();
+                	if(res == null) {
+                		throw new IllegalStateException("run.getResult() is null!");
+                	}
+                    if (res.isBetterOrEqualTo(Result.SUCCESS)) {
+                        return getRichTextFromActions(run.getActions(AbstractRichTextAction.class));
                     }
                 }
                 return Messages.noStableBuildsYet();
@@ -87,7 +101,7 @@ public class RichTextPortlet extends DashboardPortlet {
         }
     }
 
-    private String getRichTextFromActions(List<Action> actions) {
+    private String getRichTextFromActions(List<AbstractRichTextAction> actions) {
         StringBuilder result = new StringBuilder();
         for (Action action : actions) {
             if (action instanceof AbstractRichTextAction) {
@@ -105,7 +119,11 @@ public class RichTextPortlet extends DashboardPortlet {
     }
 
     public static Collection<String> getAllJobNames() {
-        return Jenkins.getInstance().getJobNames();
+    	Jenkins j = Jenkins.getInstance();
+    	if (j == null) {
+    		throw new IllegalStateException("Jenkins.getInstance() is null!");
+    	}
+        return j.getJobNames();
     }
 
     @Extension

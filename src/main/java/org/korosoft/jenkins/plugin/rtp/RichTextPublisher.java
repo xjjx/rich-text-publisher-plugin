@@ -44,6 +44,8 @@ import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.tasks.SimpleBuildStep;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -53,6 +55,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,26 +69,31 @@ import java.util.regex.Pattern;
  * @author Dmitry Korotkov
  * @since 1.0
  */
-public class RichTextPublisher extends Recorder {
+public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
     private static final Log log = LogFactory.getLog(RichTextPublisher.class);
 
     private static final transient Pattern FILE_VAR_PATTERN = Pattern.compile("\\$\\{(file|file_sl):([^\\}]+)\\}", Pattern.CASE_INSENSITIVE);
     private String stableText;
-    private String unstableText;
-    private String failedText;
+    private String unstableText = "";
+    private String failedText = "";
+    private String abortedText = "";
+    private String nullAction = "1";
     private Boolean unstableAsStable = true;
     private Boolean failedAsStable = true;
+    private Boolean abortedAsStable = true;
     private String parserName;
-
     private transient MarkupParser markupParser;
 
     @DataBoundConstructor
-    public RichTextPublisher(String stableText, String unstableText, String failedText, Boolean unstableAsStable, Boolean failedAsStable, String parserName) {
+    public RichTextPublisher(String stableText, String unstableText, String failedText, String abortedText, Boolean unstableAsStable, Boolean failedAsStable, Boolean abortedAsStable, String parserName, String nullAction) {
         this.stableText = stableText;
         this.unstableText = unstableText;
         this.failedText = failedText;
-        this.unstableAsStable = unstableAsStable == null ? true : unstableAsStable;
-        this.failedAsStable = failedAsStable == null ? true : failedAsStable;
+        this.abortedText = abortedText;
+        this.nullAction = nullAction;
+        this.unstableAsStable = unstableAsStable == null ? Boolean.TRUE : unstableAsStable;
+        this.failedAsStable = failedAsStable == null ? Boolean.TRUE : failedAsStable;
+        this.abortedAsStable = abortedAsStable == null ? Boolean.TRUE : abortedAsStable;
         setParserName(parserName);
     }
 
@@ -116,6 +124,14 @@ public class RichTextPublisher extends Recorder {
     public void setFailedText(String failedText) {
         this.failedText = failedText;
     }
+    
+    public String getAbortedText() {
+	    return abortedText;
+	}
+
+	public void setAbortedText(String abortedText) {
+		this.abortedText = abortedText;
+	}
 
     public boolean isUnstableAsStable() {
         return unstableAsStable;
@@ -132,6 +148,22 @@ public class RichTextPublisher extends Recorder {
     public void setFailedAsStable(boolean failedAsStable) {
         this.failedAsStable = failedAsStable;
     }
+    
+    public boolean isAbortedAsStable() {
+        return abortedAsStable;
+    }
+
+    public void setAbortedAsStable(boolean abortedAsStable) {
+        this.abortedAsStable = abortedAsStable;
+    }
+    
+    public String getNullAction() {
+    	return nullAction;
+    }
+
+    public void setNullAction(String nullAction) {
+    	this.nullAction = nullAction==null? "0":nullAction;
+    }
 
     public String getParserName() {
         return parserName;
@@ -143,45 +175,6 @@ public class RichTextPublisher extends Recorder {
         }
         this.parserName = parserName;
         this.markupParser = DescriptorImpl.markupParsers.get(parserName);
-    }
-
-    @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
-        final String text;
-        if (build.getResult().isBetterOrEqualTo(Result.SUCCESS)) {
-            text = stableText;
-        } else if (build.getResult().isBetterOrEqualTo(Result.UNSTABLE)) {
-            text = unstableAsStable ? stableText : unstableText;
-        } else {
-            text = failedAsStable ? stableText : failedText;
-        }
-
-        Map<String, String> vars = new HashMap<String, String>();
-        for (Map.Entry<String, String> entry : build.getEnvironment(listener).entrySet()) {
-            vars.put(String.format("ENV:%s", entry.getKey()), entry.getValue());
-        }
-        vars.putAll(build.getBuildVariables());
-
-        Matcher matcher = FILE_VAR_PATTERN.matcher(text);
-        int start = 0;
-        while (matcher.find(start)) {
-            String fileName = matcher.group(2);
-            FilePath filePath = new FilePath(build.getWorkspace(), fileName);
-            if (filePath.exists()) {
-                String value = filePath.readToString();
-                if (matcher.group(1).length() != 4) { // Group is file_sl
-                    value = value.replace("\n", "").replace("\r", "");
-                }
-                vars.put(String.format("%s:%s", matcher.group(1), fileName), value);
-            }
-            start = matcher.end();
-        }
-
-        AbstractRichTextAction action = new BuildRichTextAction(build, getMarkupParser().parse(replaceVars(text, vars)));
-        build.addAction(action);
-        build.save();
-
-        return true;
     }
 
     private MarkupParser getMarkupParser() {
@@ -205,14 +198,71 @@ public class RichTextPublisher extends Recorder {
         return BuildStepMonitor.NONE;
     }
 
+    
     @Override
-    public Collection<? extends Action> getProjectActions(AbstractProject<?, ?> project) {
-        return Collections.singletonList(new ProjectRichTextAction(project, stableText));
-    }
+	public void perform(@Nonnull Run<?, ?> build, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
+		
+		listener.getLogger().println("RTP: Started!");
+		
+		final String text;
+		if (build.getResult() == null){
+			if (nullAction == "1") {
+				text = stableText;
+			} else if (nullAction == "2") {
+				text = unstableText;
+			} else if (nullAction == "3") {
+				text = abortedText;
+			} else if (nullAction == "4") {
+				text = failedText;
+			} else {
+				listener.getLogger().println("RTP: Ignoring buildresult==null aka publishing nothing!");
+				return;
+			}
+		} else {
+			if (build.getResult() == Result.SUCCESS) {
+	            text = stableText;
+	        } else if (build.getResult() == Result.UNSTABLE) {
+	            text = unstableAsStable ? stableText : unstableText;
+	        } else if (build.getResult() == Result.ABORTED) {
+	        	text = abortedAsStable ? stableText : abortedText;
+	        } else {
+	            text = failedAsStable ? stableText : failedText;
+	        }
+		}
+
+        Map<String, String> vars = new HashMap<String, String>();
+        for (Map.Entry<String, String> entry : build.getEnvironment(listener).entrySet()) {
+            vars.put(String.format("ENV:%s", entry.getKey()), entry.getValue());
+        }
+        
+        //vars.putAll(build.getBuildVariables());	// old code, but not needed anymore
+    
+        Matcher matcher = FILE_VAR_PATTERN.matcher(text);
+        int start = 0;
+        while (matcher.find(start)) {
+            String fileName = matcher.group(2);
+            FilePath filePath = new FilePath(workspace, fileName);
+            if (filePath.exists()) {
+                String value = filePath.readToString();
+                if (matcher.group(1).length() != 4) { // Group is file_sl
+                    value = value.replace("\n", "").replace("\r", "");
+                }
+                vars.put(String.format("%s:%s", matcher.group(1), fileName), value);
+            }
+            start = matcher.end();
+        }
+        
+        AbstractRichTextAction action = new BuildRichTextAction(build, getMarkupParser().parse(replaceVars(text, vars)));
+        build.addAction(action);
+        build.save();
+        
+        listener.getLogger().println("RTP: Done!");
+		return;
+	}
 
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-
+  
         private static transient Map<String, MarkupParser> markupParsers;
         private static transient List<String> markupParserNames;
 
@@ -244,6 +294,16 @@ public class RichTextPublisher extends Recorder {
                 }
             }
         }
+        
+        public HttpResponse doFillNullActionItems() {
+            ListBoxModel items = new ListBoxModel();
+            items.add("Ignore", "0");
+            items.add("Publish stable", "1");
+            items.add("Publish unstable", "2");
+            items.add("Publish aborted", "3");
+            items.add("Publish failed", "4");
+            return items;
+        }
 
         public HttpResponse doFillParserNameItems() {
             loadParsers();
@@ -254,12 +314,12 @@ public class RichTextPublisher extends Recorder {
             return model;
         }
 
-        public FormValidation doCheckPublishText(@AncestorInPath AbstractProject project, @QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckPublishText(@AncestorInPath Job<?,?> project, @QueryParameter String value) throws IOException, ServletException {
             try {
-                FilePath workspace = project.getSomeWorkspace();
-                if (workspace == null) {
-                    return FormValidation.warning(Messages.neverBuilt());
-                }
+            	FilePath workspace = new FilePath(project.getBuildDir());//project.getSomeWorkspace();
+                //if (workspace == null) {
+                //    return FormValidation.warning(Messages.neverBuilt());
+                //}
                 Matcher matcher = FILE_VAR_PATTERN.matcher(value);
                 int start = 0;
                 List<String> missingFiles = new ArrayList<String>();
@@ -283,17 +343,21 @@ public class RichTextPublisher extends Recorder {
             }
         }
 
-        public boolean isApplicable(Class<? extends AbstractProject> aClass) {
+        @Override
+        @SuppressWarnings("rawtypes")
+		public boolean isApplicable(Class<? extends AbstractProject> aClass) {
             // indicates that this builder can be used with all kinds of project types
             return true;
-        }
+        } 
 
         /**
          * This human readable name is used in the configuration screen.
          */
+        @Override
         public String getDisplayName() {
             return Messages.publish();
         }
-
+        
     }
+    
 }

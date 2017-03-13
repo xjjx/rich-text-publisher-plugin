@@ -34,8 +34,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  */
 
-import hudson.model.AbstractBuild;
 import hudson.model.Action;
+import hudson.model.Run;
 
 /**
  * Abstract rich text action
@@ -59,5 +59,5 @@ public abstract class AbstractRichTextAction implements Action {
         return null;
     }
 
-    public abstract AbstractBuild<?, ?> getBuild();
+    public abstract Run<?, ?> getBuild();
 }
