@@ -253,7 +253,7 @@ public class RichTextPublisher extends Recorder implements SimpleBuildStep  {
         }
         
         AbstractRichTextAction action = new BuildRichTextAction(build, getMarkupParser().parse(replaceVars(text, vars)));
-        build.addAction(action);
+        build.addOrReplaceAction(action);
         build.save();
         
         listener.getLogger().println("RTP: Done!");
