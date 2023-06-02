@@ -126,7 +126,7 @@ public class RichTextPortlet extends DashboardPortlet {
         return j.getJobNames();
     }
 
-    @Extension
+    @Extension(optional = true)
     public static class DescriptorImpl extends Descriptor<DashboardPortlet> {
         @Override
         public String getDisplayName() {
