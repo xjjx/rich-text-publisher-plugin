@@ -107,7 +107,7 @@ public class StaticTextPortlet extends DashboardPortlet {
         return markupParser;
     }
 
-    @Extension
+    @Extension(optional = true)
     public static final class DescriptorImpl extends Descriptor<DashboardPortlet> {
 
         private static transient Map<String, MarkupParser> markupParsers;
