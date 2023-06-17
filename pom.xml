@@ -11,7 +11,7 @@
     <artifactId>rich-text-publisher-plugin</artifactId>
     <packaging>hpi</packaging>
     <name>Rich Text Publisher Plugin</name>
-    <version>1.5</version>
+    <version>1.6-SNAPSHOT</version>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Rich+Text+Publisher+Plugin</url>
 
     <developers>
@@ -215,7 +215,7 @@
 		<connection>scm:git:ssh://github.com/jenkinsci/${project.artifactId}.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/${project.artifactId}.git</developerConnection>
 		<url>https://github.com/jenkinsci/${project.artifactId}</url>
- 	  <tag>rich-text-publisher-plugin-1.5</tag>
+ 	  <tag>HEAD</tag>
   </scm>
 
     <properties>
