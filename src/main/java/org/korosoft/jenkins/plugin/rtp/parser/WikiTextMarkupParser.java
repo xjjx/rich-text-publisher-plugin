@@ -2,15 +2,15 @@ package org.korosoft.jenkins.plugin.rtp.parser;
 
 import org.korosoft.jenkins.plugin.rtp.MarkupParser;
 import org.korosoft.jenkins.plugin.rtp.Messages;
-import org.sweble.wikitext.engine.CompiledPage;
-import org.sweble.wikitext.engine.Compiler;
 import org.sweble.wikitext.engine.PageId;
 import org.sweble.wikitext.engine.PageTitle;
-import org.sweble.wikitext.engine.utils.HtmlPrinter;
-import org.sweble.wikitext.engine.utils.SimpleWikiConfiguration;
+import org.sweble.wikitext.engine.WtEngine;
+import org.sweble.wikitext.engine.WtEngineImpl;
+import org.sweble.wikitext.engine.config.WikiConfig;
+import org.sweble.wikitext.engine.nodes.EngProcessedPage;
+import org.sweble.wikitext.engine.output.HtmlRenderer;
+import org.sweble.wikitext.engine.utils.DefaultConfigEnWp;
 
-import javax.xml.bind.JAXBException;
-import java.io.FileNotFoundException;
 import java.io.StringWriter;
 
 /*
@@ -55,33 +55,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 public class WikiTextMarkupParser implements MarkupParser {
 
-    private SimpleWikiConfiguration config;
-    private org.sweble.wikitext.engine.Compiler compiler;
+    private WikiConfig config = null;
+    private WtEngine engine = null;
 
     private void init() {
-        try {
-            config = new SimpleWikiConfiguration("classpath:/org/sweble/wikitext/engine/SimpleWikiConfiguration.xml");
-            compiler = new Compiler(config);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (JAXBException e) {
-            throw new RuntimeException(e);
-        }
+        config = DefaultConfigEnWp.generate();
+        engine = new WtEngineImpl(config);
     }
 
     public String parse(String markupText) {
-        if (config == null || compiler == null) {
+        if (config == null || engine == null) {
             init();
         }
 
         try {
             PageTitle pageTitle = PageTitle.make(config, "PageTitle");
             PageId pageId = new PageId(pageTitle, -1);
-            CompiledPage cp = compiler.postprocess(pageId, markupText, null);
+            EngProcessedPage cp = engine.postprocess(pageId, markupText, null);
             StringWriter w = new StringWriter();
-            HtmlPrinter p = new HtmlPrinter(w, pageTitle.getFullTitle());
-            p.setStandaloneHtml(false, "");
-            p.go(cp.getPage());
+            HtmlRenderer.print(null, config, w, pageTitle.getBaseTitle(), cp.getPage());
             return w.toString();
         } catch (Exception e) {
             return "<b>" + Messages.failedToCompile() + "</b><br/>" + e.toString();
